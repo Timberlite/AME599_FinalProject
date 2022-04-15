@@ -1,4 +1,4 @@
-function Torque = Force2Torque(F, Q_trunk, q)
+function Torque = Force2Torque(F, q)
 
     l_hip = 0.0838; % hip length
     l_thigh = 0.2; % thigh length
@@ -13,8 +13,6 @@ function Torque = Force2Torque(F, Q_trunk, q)
     F_RL = F(7:9);
     F_RR = F(10:12);
 
-    R_trunk = quat2rotm(Q_trunk.');
-
     %FL
     q1 = q(1);
     q2 = q(2);
@@ -22,7 +20,7 @@ function Torque = Force2Torque(F, Q_trunk, q)
     J_FL = [                                                                    0,            L3*sin(q2)*sin(q3) - cos(q2)*(L2 + L3*cos(q3)),            L3*sin(q2)*sin(q3) - L3*cos(q2)*cos(q3);
             cos(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) - L1*sin(q1), -sin(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)), -sin(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2));
             sin(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) + L1*cos(q1),  cos(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)),  cos(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2))];
-    Torque_FL = -(J_FL.')*(R_trunk.')*F_FL;
+    Torque_FL = (J_FL.')*F_FL;
     
     %FR 
     q1 = q(4);
@@ -31,7 +29,7 @@ function Torque = Force2Torque(F, Q_trunk, q)
     J_FR = [                                                                    0,            L3*sin(q2)*sin(q3) - cos(q2)*(L2 + L3*cos(q3)),            L3*sin(q2)*sin(q3) - L3*cos(q2)*cos(q3);
             cos(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) + L1*sin(q1), -sin(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)), -sin(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2));
             sin(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) - L1*cos(q1),  cos(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)),  cos(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2))];
-    Torque_FR = -(J_FR.')*(R_trunk.')*F_FR;
+    Torque_FR = (J_FR.')*F_FR;
     
     %RL
     q1 = q(7);
@@ -40,7 +38,7 @@ function Torque = Force2Torque(F, Q_trunk, q)
     J_RL = [                                                                    0,            L3*sin(q2)*sin(q3) - cos(q2)*(L2 + L3*cos(q3)),            L3*sin(q2)*sin(q3) - L3*cos(q2)*cos(q3);
             cos(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) - L1*sin(q1), -sin(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)), -sin(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2));
             sin(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) + L1*cos(q1),  cos(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)),  cos(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2))];
-    Torque_RL = -(J_RL.')*(R_trunk.')*F_RL;
+    Torque_RL = (J_RL.')*F_RL;
     
     %RR
     q1 = q(10);
@@ -49,7 +47,7 @@ function Torque = Force2Torque(F, Q_trunk, q)
     J_RR = [                                                                    0,            L3*sin(q2)*sin(q3) - cos(q2)*(L2 + L3*cos(q3)),            L3*sin(q2)*sin(q3) - L3*cos(q2)*cos(q3);
             cos(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) + L1*sin(q1), -sin(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)), -sin(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2));
             sin(q1)*(cos(q2)*(L2 + L3*cos(q3)) - L3*sin(q2)*sin(q3)) - L1*cos(q1),  cos(q1)*(sin(q2)*(L2 + L3*cos(q3)) + L3*cos(q2)*sin(q3)),  cos(q1)*(L3*cos(q2)*sin(q3) + L3*cos(q3)*sin(q2))];
-    Torque_RR = -(J_RR.')*(R_trunk.')*F_RR;
+    Torque_RR = (J_RR.')*F_RR;
 
     Torque = [Torque_FL;
               Torque_FR;
