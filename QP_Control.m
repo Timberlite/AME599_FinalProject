@@ -1,15 +1,13 @@
 function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
-
     % system parameters
-    m_trunk = 6.0;
-    m_hip = 0.696;
-    m_thigh = 1.013;
-    m_calf = 0.166;
+    global sim_params robot_params;
+    m_trunk = robot_params.m_trunk;
+    m_hip = robot_params.m_hip;
+    m_thigh = robot_params.m_thigh;
+    m_calf = robot_params.m_calf;
     m = m_trunk+4*(m_hip+m_thigh+m_calf);
-    g = 9.81;
-    I_b = [0.0158533, 0, 0;
-           0 0.0377999 0;
-           0 0 0.0456542];
+    g = sim_params.g;
+    I_b = robot_params.I_b;
        
     % force constraints
     f_min = 10;
@@ -17,7 +15,7 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
     mu = 0.5;
 
     % desire state
-    P_trunk_des = [0;0;0.3];
+    P_trunk_des = [(P_foot(1)+P_foot(4)+P_foot(7)+P_foot(10))/4;(P_foot(2)+P_foot(5)+P_foot(8)+P_foot(11))/4;0.3];
     Euler_trunk_des = [0;0;0];
     V_trunk_des = [0;0;0];
     omega_trunk_des = [0;0;0];
@@ -72,6 +70,6 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
     C = blkdiag(C_f,C_f,C_f,C_f);
     d = repmat(d_f,4,1);
 
-    F = quadprog(H,f,C,d);
-
+    F_ground = quadprog(H,f,C,d);
+    F = -1*kron(eye(4),R_trunk.')*F_ground;
 end
