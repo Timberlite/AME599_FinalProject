@@ -3,7 +3,7 @@ function F  = Cartesian_Control(t, Q_trunk, V_trunk, P_foot, V_foot, P_hip)
     setup_time = sim_params.setup_time;      % (s) time for initial settling
     gait_cycle = sim_params.gait_cycle;      % (s) time for one gait cycle
     ground_offset = 0.020; % (m) P_foot height at contact
-    step_height = 0.10;
+    step_height = sim_params.default_step_height;
     
     R_trunk = quat2rotm(Q_trunk.');
 
@@ -62,21 +62,22 @@ function F  = Cartesian_Control(t, Q_trunk, V_trunk, P_foot, V_foot, P_hip)
         
     if t>=setup_time 
         t = t-setup_time;
-        if t<2
+        
+        if t<4
             V_trunk_des = [0;0;0];
-        elseif t<6
-            V_trunk_des = [1;0;0];
         elseif t<8
-            V_trunk_des = [0;0;0];
+            V_trunk_des = [1;0;0];
         elseif t<12
-            V_trunk_des = [-1;0;0];
+            V_trunk_des = [0;0;0];
         elseif t<16
-            V_trunk_des = [0;0;0];
+            V_trunk_des = [-1;0;0];
         elseif t<20
-            V_trunk_des = [0;0.5;0];
-        elseif t<22
             V_trunk_des = [0;0;0];
-        elseif t<26
+        elseif t<24
+            V_trunk_des = [0;0.5;0];
+        elseif t<28
+            V_trunk_des = [0;0;0];
+        elseif t<32
             V_trunk_des = [0;-0.5;0];
         else
             V_trunk_des = [0;0;0];
@@ -84,19 +85,20 @@ function F  = Cartesian_Control(t, Q_trunk, V_trunk, P_foot, V_foot, P_hip)
         
         t = rem(t, gait_cycle);
         T = gait_cycle/2;
+        K_step = 0.03;
         t_onestep = rem(t, T);
 
-        P_foot_FL_des = [P_hip_FL(1)+T/2*V_trunk(1)+T*(V_trunk(1)-V_trunk_des(1));
-                         P_hip_FL(2)+T/2*V_trunk(2)+T*(V_trunk(2)-V_trunk_des(2));
+        P_foot_FL_des = [P_hip_FL(1)+T/2*V_trunk(1)+K_step*(V_trunk(1)-V_trunk_des(1));
+                         P_hip_FL(2)+T/2*V_trunk(2)+K_step*(V_trunk(2)-V_trunk_des(2));
                          step_height/(T/2)^2*t_onestep*(T-t_onestep)];
-        P_foot_FR_des = [P_hip_FR(1)+T/2*V_trunk(1)+T*(V_trunk(1)-V_trunk_des(1));
-                         P_hip_FR(2)+T/2*V_trunk(2)+T*(V_trunk(2)-V_trunk_des(2));
+        P_foot_FR_des = [P_hip_FR(1)+T/2*V_trunk(1)+K_step*(V_trunk(1)-V_trunk_des(1));
+                         P_hip_FR(2)+T/2*V_trunk(2)+K_step*(V_trunk(2)-V_trunk_des(2));
                          step_height/(T/2)^2*t_onestep*(T-t_onestep)];
-        P_foot_RL_des = [P_hip_RL(1)+T/2*V_trunk(1)+T*(V_trunk(1)-V_trunk_des(1));
-                         P_hip_RL(2)+T/2*V_trunk(2)+T*(V_trunk(2)-V_trunk_des(2));
+        P_foot_RL_des = [P_hip_RL(1)+T/2*V_trunk(1)+K_step*(V_trunk(1)-V_trunk_des(1));
+                         P_hip_RL(2)+T/2*V_trunk(2)+K_step*(V_trunk(2)-V_trunk_des(2));
                          step_height/(T/2)^2*t_onestep*(T-t_onestep)];
-        P_foot_RR_des = [P_hip_RR(1)+T/2*V_trunk(1)+T*(V_trunk(1)-V_trunk_des(1));
-                         P_hip_RR(2)+T/2*V_trunk(2)+T*(V_trunk(2)-V_trunk_des(2));
+        P_foot_RR_des = [P_hip_RR(1)+T/2*V_trunk(1)+K_step*(V_trunk(1)-V_trunk_des(1));
+                         P_hip_RR(2)+T/2*V_trunk(2)+K_step*(V_trunk(2)-V_trunk_des(2));
                          step_height/(T/2)^2*t_onestep*(T-t_onestep)];
         V_foot_des = [0;
                       0;

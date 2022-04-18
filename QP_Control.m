@@ -8,6 +8,7 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
     m = m_trunk+4*(m_hip+m_thigh+m_calf);
     g = sim_params.g;
     I_b = robot_params.I_b;
+    default_trunk_height = sim_params.default_trunk_height;
        
     % force constraints
     f_min = 10;
@@ -15,7 +16,7 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
     mu = 0.5;
 
     % desire state
-    P_trunk_des = [(P_foot(1)+P_foot(4)+P_foot(7)+P_foot(10))/4;(P_foot(2)+P_foot(5)+P_foot(8)+P_foot(11))/4;0.3];
+    P_trunk_des = [(P_foot(1)+P_foot(4)+P_foot(7)+P_foot(10))/4;(P_foot(2)+P_foot(5)+P_foot(8)+P_foot(11))/4;default_trunk_height];
     Euler_trunk_des = [0;0;0];
     V_trunk_des = [0;0;0];
     omega_trunk_des = [0;0;0];
@@ -31,7 +32,7 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
     Kd_w = diag([50 50 50]);
 
     dd_P_trunk_des = Kp_p*(P_trunk_des-P_trunk)+Kd_p*(V_trunk_des-V_trunk)+[0;0;g];
-    dd_R_trunk_des = Kp_w*(Euler_trunk_des-Euler_trunk)+Kd_w*(omega_trunk_des-omega_trunk);
+    dd_R_trunk_des = Kp_w*(Euler_trunk_des-Euler_trunk)+Kd_w*(omega_trunk_des-(R_trunk)*omega_trunk);
 
     b_des = [m*(dd_P_trunk_des);
              I_w*dd_R_trunk_des];

@@ -1,12 +1,9 @@
 function Torque = Force2Torque(F, q)
 
-    l_hip = 0.0838; % hip length
-    l_thigh = 0.2; % thigh length
-    l_calf = 0.2;  % calf length
-    
-    L1 = l_hip;
-    L2 = l_thigh;
-    L3 = l_calf;
+    global robot_params;
+    L1 = robot_params.l_hip;
+    L2 = robot_params.l_thigh;
+    L3 = robot_params.l_calf;
     
     F_FL = F(1:3);
     F_FR = F(4:6);

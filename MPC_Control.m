@@ -1,4 +1,4 @@
-function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, trajectory, gait, Q, Alpha)
+function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, trajectory, gait, Q)
     % system parameters
     global sim_params robot_params;
     m_trunk = robot_params.m_trunk;
@@ -15,19 +15,19 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
     
     % force constraints
     f_max = 500;
+    f_min = 0;
     mu = 1.0;
 
     % current state
     Euler_trunk = (quat2eul(Q_trunk.','XYZ')).';
     R_trunk = quat2rotm(Q_trunk.');
-%     I_w = R_trunk*I_b*R_trunk.';
     
     X = [P_trunk;
          Euler_trunk;
          V_trunk;
          omega_trunk;
          g];
-
+    Alpha = 0.00001;
     R = Alpha*eye(12);
     
     % Calculate foot pos
@@ -41,58 +41,57 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
     r_footRL_b = (R_trunk.')*(P_footRL_w-P_trunk);
     r_footRR_b = (R_trunk.')*(P_footRR_w-P_trunk);
 
-    
     % dynamic matrix
-    rz_des = trajectory(6,N/2);
-    A_dynamic = [0 0 0 0 0 0 1 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 1 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 1 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 cos(rz_des)  sin(rz_des) 0 0;
-                 0 0 0 0 0 0 0 0 0 -sin(rz_des) cos(rz_des) 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 1 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 -1;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0 0];
-    B_dynamic = [0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0;
-                 0 0 0 0 0 0 0 0 0 0 0 0;
+    
+    rz_des = Euler_trunk(3);
+    R_z = [cos(rz_des) -sin(rz_des) 0;
+           sin(rz_des) cos(rz_des) 0;
+           0 0 1];
+    A_dynamic = [zeros(3), zeros(3), eye(3), zeros(3), zeros(3,1);
+                 zeros(3), zeros(3), zeros(3), R_z, zeros(3,1);
+                 zeros(3), zeros(3), zeros(3), zeros(3), [0;0;-1];
+                 zeros(3), zeros(3), zeros(3), zeros(3), zeros(3,1);
+                 zeros(1,13)];
+    A_bar_k = A_dynamic*dt_MPC+eye(13);
+    B_dynamic = [zeros(3), zeros(3), zeros(3), zeros(3);
+                 zeros(3), zeros(3), zeros(3), zeros(3);
                  (1/m)*R_trunk, (1/m)*R_trunk, (1/m)*R_trunk, (1/m)*R_trunk;
-                 I_b\skew(r_footFL_b), I_b\skew(r_footFR_b), I_b\skew(r_footRL_b), I_b\skew(r_footRR_b)
-                 0 0 0 0 0 0 0 0 0 0 0 0;];
-    A_bar = A_dynamic*dt_MPC+eye(13);
-    B_bar = B_dynamic*dt_MPC;   
+                 I_b\skew(r_footFL_b), I_b\skew(r_footFR_b), I_b\skew(r_footRL_b), I_b\skew(r_footRR_b);
+                 zeros(1,12)];
+    B_bar_k = B_dynamic*dt_MPC;
+    
+    [A_bar, B_bar] = Compute_Dynamic_Matrices(k,trajectory,R_trunk);
 
     % contact force constrains
-    C_f = [0,0,1; 
+    C_f = [0,0,1;
+           0,0,-1;
            1,0,-mu;
            -1,0,-mu;
            0,1,-mu;
            0,-1,-mu];
     d_f = [f_max;
+           -f_min;
            0;
            0;
            0;
            0];
 
-    C_f = kron(eye(4*N),C_f);
+    C_f = kron(eye(4*N),C_f*R_trunk);
     d_f = repmat(d_f,4*N,1);
     
-    % dynamic constraints   
-    A_bar_map = diag(ones(1,N-1),-1);
-    Ceq_dynamic = [eye(13*N)+kron(A_bar_map,-A_bar), kron(eye(N),-B_bar)];
-    deq_dynamic = [A_bar*X;
+    % dynamic constraints
+%     A_bar_map = diag(ones(1,N-1),-1);
+%     Ceq_dynamic = [eye(13*N)+kron(A_bar_map,-A_bar_k), kron(eye(N),-B_bar_k)];
+    A_bar_map = blkdiag(zeros(13),-A_bar{2},-A_bar{3},-A_bar{4},-A_bar{5},-A_bar{6},-A_bar{7},-A_bar{8},-A_bar{9},-A_bar{10});
+    A_bar_map = circshift(A_bar_map, [0 -13]);
+    Ceq_dynamic = [eye(13*N)+A_bar_map, blkdiag(-B_bar_k,-B_bar{1},-B_bar{2},-B_bar{3},-B_bar{4},-B_bar{5},-B_bar{6},-B_bar{7},-B_bar{8},-B_bar{9})];
+    deq_dynamic = [A_bar_k*X;
                    zeros(13*(N-1),1)];
                
     % gaits constraints
     Ceq_gaits = gait;
     Ceq_gaits = circshift(Ceq_gaits,[-(k-1)*12 -(k-1)*12]);
+    Ceq_gaits = kron(eye(N/10),Ceq_gaits);
     Ceq_gaits = [zeros(length(Ceq_gaits(:,1)),13*N),Ceq_gaits];
     deq_gaits = zeros(length(Ceq_gaits(:,1)),1);
     
@@ -108,7 +107,7 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
     deq = [deq_dynamic;
            deq_gaits];
 
-    X_bar_optimal = quadprog(H,f,C,d, Ceq, deq);
+    X_bar_optimal = quadprog(H,f,C,d,Ceq,deq);
     Fb_optimal = X_bar_optimal(13*N+1:13*N+12);
     F = -Fb_optimal;
 end
