@@ -2,16 +2,16 @@
 global sim_params;
 sim_params.Kp_ground = 1e6;
 sim_params.Kd_ground = 1e3;
-sim_params.mu_static = 1.5;
-sim_params.mu_dynamic = 1.4;
+sim_params.mu_static = 1.9;
+sim_params.mu_dynamic = 1.8;
 sim_params.g = 9.81;
 sim_params.dt = 0.001;
-sim_params.Horizon = 10;
-sim_params.dt_MPC = 0.04;
+sim_params.Horizon = 20;
+sim_params.dt_MPC = 0.01;
 sim_params.setup_time = 2.0;
-sim_params.gait_cycle = 0.4;
+sim_params.gait_cycle = 0.2;
 sim_params.default_trunk_height = 0.3;
-sim_params.default_step_height = 0.08;
+sim_params.default_step_height = 0.1;
 
 % Robot Parameter
 global robot_params;

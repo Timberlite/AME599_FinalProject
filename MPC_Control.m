@@ -60,7 +60,7 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
                  zeros(1,12)];
     B_bar_k = B_dynamic*dt_MPC;
     
-    [A_bar, B_bar] = Compute_Dynamic_Matrices(k,trajectory,R_trunk);
+    [A_bar, B_bar] = Compute_Dynamic_Matrices(t,trajectory,R_trunk);
 
     % contact force constrains
     C_f = [0,0,1;
@@ -82,16 +82,16 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
     % dynamic constraints
 %     A_bar_map = diag(ones(1,N-1),-1);
 %     Ceq_dynamic = [eye(13*N)+kron(A_bar_map,-A_bar_k), kron(eye(N),-B_bar_k)];
-    A_bar_map = blkdiag(zeros(13),-A_bar{2},-A_bar{3},-A_bar{4},-A_bar{5},-A_bar{6},-A_bar{7},-A_bar{8},-A_bar{9},-A_bar{10});
+    A_bar_map = blkdiag(zeros(13),-A_bar{1},-A_bar{2},-A_bar{3},-A_bar{4},-A_bar{5},-A_bar{6},-A_bar{7},-A_bar{8},-A_bar{9},-A_bar{10},-A_bar{11},-A_bar{12},-A_bar{13},-A_bar{14},-A_bar{15},-A_bar{16},-A_bar{17},-A_bar{18},-A_bar{19});
     A_bar_map = circshift(A_bar_map, [0 -13]);
-    Ceq_dynamic = [eye(13*N)+A_bar_map, blkdiag(-B_bar_k,-B_bar{1},-B_bar{2},-B_bar{3},-B_bar{4},-B_bar{5},-B_bar{6},-B_bar{7},-B_bar{8},-B_bar{9})];
+    Ceq_dynamic = [eye(13*N)+A_bar_map, blkdiag(-B_bar_k,-B_bar{1},-B_bar{2},-B_bar{3},-B_bar{4},-B_bar{5},-B_bar{6},-B_bar{7},-B_bar{8},-B_bar{9},-B_bar{10},-B_bar{11},-B_bar{12},-B_bar{13},-B_bar{14},-B_bar{15},-B_bar{16},-B_bar{17},-B_bar{18},-B_bar{19})];
     deq_dynamic = [A_bar_k*X;
                    zeros(13*(N-1),1)];
                
     % gaits constraints
     Ceq_gaits = gait;
     Ceq_gaits = circshift(Ceq_gaits,[-(k-1)*12 -(k-1)*12]);
-    Ceq_gaits = kron(eye(N/10),Ceq_gaits);
+    Ceq_gaits = kron(eye(N/20),Ceq_gaits);
     Ceq_gaits = [zeros(length(Ceq_gaits(:,1)),13*N),Ceq_gaits];
     deq_gaits = zeros(length(Ceq_gaits(:,1)),1);
     
