@@ -11,7 +11,9 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
        
     N = sim_params.Horizon;
     dt_MPC = sim_params.dt_MPC;
-    k = floor(t/dt_MPC)+1; % horizon k within 1~N
+    gait_cycle = sim_params.gait_cycle;
+    t_onecycle = rem(t, gait_cycle);
+    k = floor(t_onecycle/dt_MPC)+1; % horizon k within 1~N
     
     % force constraints
     f_max = 500;
@@ -59,7 +61,7 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
                  I_b\skew(r_footFL_b), I_b\skew(r_footFR_b), I_b\skew(r_footRL_b), I_b\skew(r_footRR_b);
                  zeros(1,12)];
     B_bar_k = B_dynamic*dt_MPC;
-    
+
     [A_bar, B_bar] = Compute_Dynamic_Matrices(t,trajectory,R_trunk);
 
     % contact force constrains
@@ -106,8 +108,8 @@ function F = MPC_Control(t, P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot, traj
            Ceq_gaits];
     deq = [deq_dynamic;
            deq_gaits];
-
-    X_bar_optimal = quadprog(H,f,C,d,Ceq,deq);
+    options = optimset('Display', 'off');
+    X_bar_optimal = quadprog(H,f,C,d,Ceq,deq,[],[],[],options);
     Fb_optimal = X_bar_optimal(13*N+1:13*N+12);
     F = -Fb_optimal;
 end

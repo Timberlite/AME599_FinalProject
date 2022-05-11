@@ -70,7 +70,7 @@ function F = QP_Control(P_trunk, Q_trunk, V_trunk, omega_trunk, P_foot)
            0];
     C = blkdiag(C_f,C_f,C_f,C_f);
     d = repmat(d_f,4,1);
-
-    F_ground = quadprog(H,f,C,d);
+    options = optimset('Display', 'off');
+    F_ground = quadprog(H,f,C,d,[],[],[],[],[],options);
     F = -1*kron(eye(4),R_trunk.')*F_ground;
 end

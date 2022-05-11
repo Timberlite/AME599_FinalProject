@@ -13,10 +13,10 @@ function [A_bar, B_bar ] = Compute_Dynamic_Matrices(t ,trajectory, R_trunk)
     A_bar = cell(1,N);
     B_bar = cell(1,N);
     
-    r_hipFL_b = [0.184;0.13;0];
-    r_hipFR_b = [0.184;-0.13;0];
-    r_hipRL_b = [-0.177;0.13;0];
-    r_hipRR_b = [-0.177;-0.13;0];
+    r_hipFL_b = [0.18;0.13;0];
+    r_hipFR_b = [0.18;-0.13;0];
+    r_hipRL_b = [-0.18;0.13;0];
+    r_hipRR_b = [-0.18;-0.13;0];
     
     for i=1:N
         rz_des = trajectory(6,i);
